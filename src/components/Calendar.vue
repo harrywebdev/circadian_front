@@ -1,11 +1,9 @@
 <template>
-  <div>
-    <Calendar />
-  </div>
+  <Calendar />
 </template>
 
 <script>
-import Calendar from '@/components/Calendar';
+import { Calendar } from 'v-calendar';
 
 export default {
   components: {
