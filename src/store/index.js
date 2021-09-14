@@ -1,18 +1,16 @@
 import { createStore } from 'vuex';
+import actions from '@/store/actions';
+import mutations from '@/store/mutations';
 
-// Create a new store instance.
 const store = createStore({
   state() {
     return {
-      count: 0,
+      daylogs: [],
     };
   },
-  
-  mutations: {
-    increment(state) {
-      state.count++;
-    },
-  },
+
+  actions,
+  mutations,
 });
 
 export default store;
