@@ -90,7 +90,8 @@
 <script>
 import { DatePicker } from 'v-calendar';
 import { isValid, parseISO, format } from 'date-fns';
-import { ACTION_CREATE_DAYLOG } from '@/store/action-types';
+import { ACTION_FETCH_DAYLOG, ACTION_CREATE_DAYLOG, ACTION_UPDATE_DAYLOG } from '@/store/action-types';
+import { serializeData } from '@/api/daylogs';
 
 export default {
   components: {
@@ -110,17 +111,34 @@ export default {
       skip_sleep_at: true,
       skip_first_meal_at: true,
       skip_last_meal_at: true,
-
-      model: {
-        wake_at: this.date,
-        sleep_at: this.date,
-        first_meal_at: this.date,
-        last_meal_at: this.date,
-        has_alcohol: '',
-        has_alcohol_in_evening: '',
-        has_smoked: '',
-      },
     };
+  },
+
+  watch: {
+    // set defaults when we enable time fields
+    skip_wake_at(value) {
+      if (!value && !this.model.wake_at) {
+        this.model.wake_at = this.date;
+      }
+    },
+
+    skip_sleep_at(value) {
+      if (!value && !this.model.sleep_at) {
+        this.model.sleep_at = this.date;
+      }
+    },
+
+    skip_first_meal_at(value) {
+      if (!value && !this.model.first_meal_at) {
+        this.model.first_meal_at = this.date;
+      }
+    },
+
+    skip_last_meal_at(value) {
+      if (!value && !this.model.last_meal_at) {
+        this.model.last_meal_at = this.date;
+      }
+    },
   },
 
   computed: {
@@ -133,12 +151,44 @@ export default {
     formattedLogDate() {
       return this.recordDate ? format(this.recordDate, 'd. M. yyyy') : null;
     },
+
+    model() {
+      var model = this.$store.getters.findDaylogByDate(this.recordDate);
+
+      // reasonable defaults for creating new record
+      if (!model) {
+        return {
+          wake_at: this.date,
+          sleep_at: this.date,
+          first_meal_at: this.date,
+          last_meal_at: this.date,
+          has_alcohol: '',
+          has_alcohol_in_evening: '',
+          has_smoked: '',
+        };
+      }
+
+      // updating current record
+      return serializeData(model);
+    },
   },
 
   async mounted() {
     if (!this.recordDate) {
       alert('Invalid date, navigating back...');
+
       this.$router.push({ name: 'index' });
+      return;
+    }
+
+    await this.$store.dispatch(ACTION_FETCH_DAYLOG, this.recordDate);
+
+    if (this.model.id) {
+      this.id = this.model.id;
+      this.skip_wake_at = this.model.wake_at === null;
+      this.skip_sleep_at = this.model.sleep_at === null;
+      this.skip_first_meal_at = this.model.first_meal_at === null;
+      this.skip_last_meal_at = this.model.last_meal_at === null;
     }
   },
 
@@ -147,13 +197,14 @@ export default {
       event.preventDefault();
 
       const model = { ...this.model, log_date: this.date };
+
       if (this.skip_wake_at) model.wake_at = null;
       if (this.skip_sleep_at) model.sleep_at = null;
       if (this.skip_first_meal_at) model.first_meal_at = null;
       if (this.skip_last_meal_at) model.last_meal_at = null;
 
       try {
-        await this.$store.dispatch(ACTION_CREATE_DAYLOG, model);
+        await this.$store.dispatch(model.id ? ACTION_UPDATE_DAYLOG : ACTION_CREATE_DAYLOG, model);
 
         this.goBack();
       } catch (e) {

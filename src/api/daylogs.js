@@ -1,14 +1,15 @@
-import { format, parseISO } from 'date-fns';
+import { formatISO, parseISO } from 'date-fns';
 import { applySpec, compose, prop, filter, map } from 'ramda';
 import { specDateField, specBoolField } from '@/api/model-specs';
 import ErrorService from '@/domain/error-service';
 import isValid from 'date-fns/isValid';
+import formatDate from '@/domain/format-date';
 
 const baseUrl = `${process.env.VUE_APP_API_URL}/daylogs`;
 
 export async function fetchDaylogs(from, to) {
   try {
-    const response = await fetch(`${baseUrl}?from=${format(from, 'yyyy-MM-dd')}&to=${format(to, 'yyyy-MM-dd')}`, {
+    const response = await fetch(`${baseUrl}?from=${formatDate(from)}&to=${formatDate(to)}`, {
       headers: {
         Accept: 'application/json',
       },
@@ -26,16 +27,48 @@ export async function fetchDaylogs(from, to) {
   }
 }
 
+export async function fetchDaylog(log_date) {
+  try {
+    const response = await fetch(`${baseUrl}/${formatDate(log_date)}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // it's okay to not find a record
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (data.message) {
+        throw Error(data.message);
+      }
+
+      throw Error(`${response.status} ${response.statusText}`);
+    }
+
+    return daylogModelSpec(data.daylog);
+  } catch (e) {
+    e.message = `[fetchDaylogs] ${e.message}`;
+    ErrorService.onError(e);
+  }
+}
+
 export async function storeDaylog(daylogData) {
+  const updatingId = daylogData.id;
+
   try {
     const normalized = normalizeData(daylogData);
 
-    const response = await fetch(baseUrl, {
+    const response = await fetch(baseUrl + (updatingId ? `/${updatingId}` : ''), {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      method: 'post',
+      method: updatingId ? 'PATCH' : 'POST',
       body: JSON.stringify(normalized),
     });
 
@@ -73,7 +106,7 @@ const daylogModelSpec = applySpec({
 
 function normalizeData(data) {
   const normalized = {
-    log_date: format(parseISO(data.log_date), 'yyyy-MM-dd'),
+    log_date: formatDate(data.log_date),
     has_alcohol: normalizeChoice(data.has_alcohol),
     has_alcohol_in_evening: normalizeChoice(data.has_alcohol_in_evening),
     has_smoked: normalizeChoice(data.has_smoked),
@@ -102,7 +135,45 @@ function normalizeTime(value) {
   const dateTime = typeof value == 'string' ? parseISO(value) : value;
 
   if (isValid(dateTime)) {
-    return format(dateTime, 'HH:mm');
+    return formatISO(dateTime);
+  }
+
+  return null;
+}
+
+export function serializeData(data) {
+  const serialized = {
+    id: Number(data.id),
+    log_date: formatDate(data.log_date),
+    has_alcohol: serializeChoice(data.has_alcohol),
+    has_alcohol_in_evening: serializeChoice(data.has_alcohol_in_evening),
+    has_smoked: serializeChoice(data.has_smoked),
+    wake_at: serializeTime(data.wake_at),
+    first_meal_at: serializeTime(data.first_meal_at),
+    last_meal_at: serializeTime(data.last_meal_at),
+    sleep_at: serializeTime(data.sleep_at),
+  };
+
+  return serialized;
+}
+
+function serializeChoice(value) {
+  if (value === true) {
+    return 'yes';
+  }
+
+  if (value === false) {
+    return 'no';
+  }
+
+  return '';
+}
+
+function serializeTime(value) {
+  const dateTime = typeof value == 'string' ? parseISO(value) : value;
+
+  if (isValid(dateTime)) {
+    return dateTime;
   }
 
   return null;

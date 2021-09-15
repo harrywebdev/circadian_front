@@ -1,6 +1,12 @@
 <template>
   <div>
-    <Calendar :attributes="calendarData" @update:from-page="onPageUpdate" @dayclick="onDayClick" is-dark />
+    <Calendar
+      :attributes="calendarData"
+      @update:from-page="onPageUpdate"
+      @dayclick="onDayClick"
+      is-dark
+      timezone="utc"
+    />
   </div>
 </template>
 
@@ -43,7 +49,7 @@ export default {
     },
 
     onDayClick(day) {
-      this.$router.push({ name: 'daylogs.create', params: { date: formatISO(day.date) } });
+      this.$router.push({ name: 'daylogform', params: { date: formatISO(day.date) } });
     },
   },
 };
