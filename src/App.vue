@@ -4,8 +4,18 @@
 </template>
 
 <script>
+import { MUTATION_INIT_STORE } from '@/store/mutation-types';
+
 export default {
   name: 'App',
+
+  beforeCreate() {
+    try {
+      this.$store.commit(MUTATION_INIT_STORE);
+    } catch (e) {
+      console.error(e);
+    }
+  },
 };
 </script>
 
