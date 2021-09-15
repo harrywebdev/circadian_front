@@ -1,4 +1,6 @@
 import { format } from 'date-fns';
+import { applySpec, compose, prop, filter, map } from 'ramda';
+import { specDateField, specBoolField } from '@/api/model-specs';
 
 export async function fetchDaylogs(from, to) {
   const baseUrl = `${process.env.VUE_APP_API_URL}/daylogs`;
@@ -11,5 +13,19 @@ export async function fetchDaylogs(from, to) {
 
   const data = await response.json();
 
-  return data.daylogs;
+  // apply model spec and filter out invalid records (based on `log_date` validity)
+  return compose(filter(prop('log_date')), map(daylogModelSpec))(data.daylogs);
 }
+
+const daylogModelSpec = applySpec({
+  id: compose(Number, prop('id')),
+  is_complete: compose(Boolean, prop('is_complete')),
+  log_date: specDateField('log_date'),
+  has_alcohol: specBoolField('has_alcohol'),
+  has_alcohol_in_evening: specBoolField('has_alcohol_in_evening'),
+  has_smoked: specBoolField('has_smoked'),
+  wake_at: specDateField('wake_at'),
+  first_meal_at: specDateField('first_meal_at'),
+  last_meal_at: specDateField('last_meal_at'),
+  sleep_at: specDateField('sleep_at'),
+});
