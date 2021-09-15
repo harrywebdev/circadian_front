@@ -1,4 +1,5 @@
 import { prop } from 'ramda';
+import { hasMealsComplete, hasSleepComplete, hasVicesComplete, isComplete } from '@/domain/daylog-completeness';
 
 export default function transformDaylogsForVCalendar(daylogs) {
   // group daylogs by the completeness (presented by dots)
@@ -61,22 +62,6 @@ function groupDaylogsByCompleteness(daylogs) {
       incomplete: [],
     }
   );
-}
-
-function hasSleepComplete(daylog) {
-  return daylog.wake_at !== null && daylog.sleep_at !== null;
-}
-
-function hasMealsComplete(daylog) {
-  return daylog.first_meal_at !== null && daylog.last_meal_at !== null;
-}
-
-function hasVicesComplete(daylog) {
-  return daylog.has_alcohol !== null && daylog.has_alcohol_in_evening !== null && daylog.has_smoked !== null;
-}
-
-function isComplete(daylog) {
-  return daylog.is_complete === true;
 }
 
 function getDotColorByCompleteType(completeType) {
