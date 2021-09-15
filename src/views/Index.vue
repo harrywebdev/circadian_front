@@ -1,12 +1,13 @@
 <template>
   <div>
-    <Calendar :attributes="calendarData" @update:from-page="onPageUpdate" is-dark />
+    <Calendar :attributes="calendarData" @update:from-page="onPageUpdate" @dayclick="onDayClick" is-dark />
   </div>
 </template>
 
 <script>
 import { Calendar } from 'v-calendar';
 import { mapState } from 'vuex';
+import { formatISO } from 'date-fns';
 import { ACTION_FETCH_DAYLOGS, ACTION_SELECT_CALENDAR_DATES } from '@/store/action-types';
 import transformDaylogsForVCalendar from '@/domain/calendar/v-calendar-transform';
 
@@ -39,6 +40,10 @@ export default {
 
       // fetch new daylogs
       this.$store.dispatch(ACTION_FETCH_DAYLOGS, { from: this.currentFrom, to: this.currentTo });
+    },
+
+    onDayClick(day) {
+      this.$router.push({ name: 'daylogs.create', params: { date: formatISO(day.date) } });
     },
   },
 };
