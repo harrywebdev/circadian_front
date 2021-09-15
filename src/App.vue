@@ -1,4 +1,5 @@
 <template>
+  <h1>Log Circadian</h1>
   <router-view />
 </template>
 
