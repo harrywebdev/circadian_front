@@ -4,14 +4,14 @@
 </template>
 
 <script>
-import { MUTATION_INIT_STORE } from '@/store/mutation-types';
+import { ACTION_INIT_STORE } from '@/store/action-types';
 
 export default {
   name: 'App',
 
   beforeCreate() {
     try {
-      this.$store.commit(MUTATION_INIT_STORE);
+      this.$store.dispatch(ACTION_INIT_STORE);
     } catch (e) {
       console.error(e);
     }
