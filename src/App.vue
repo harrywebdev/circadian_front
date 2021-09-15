@@ -5,6 +5,7 @@
 
 <script>
 import { ACTION_INIT_STORE } from '@/store/action-types';
+import ErrorService from '@/domain/error-service';
 
 export default {
   name: 'App',
@@ -13,7 +14,8 @@ export default {
     try {
       this.$store.dispatch(ACTION_INIT_STORE);
     } catch (e) {
-      console.error(e);
+      e.message = `[Init Store] ${e.message}`;
+      ErrorService.onError(e);
     }
   },
 };

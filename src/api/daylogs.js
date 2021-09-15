@@ -1,20 +1,28 @@
 import { format } from 'date-fns';
 import { applySpec, compose, prop, filter, map } from 'ramda';
 import { specDateField, specBoolField } from '@/api/model-specs';
+import ErrorService from '@/domain/error-service';
 
 export async function fetchDaylogs(from, to) {
   const baseUrl = `${process.env.VUE_APP_API_URL}/daylogs`;
 
-  const response = await fetch(`${baseUrl}?from=${format(from, 'yyyy-MM-dd')}&to=${format(to, 'yyyy-MM-dd')}`, {
-    headers: {
-      Accept: 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(`${baseUrl}?from=${format(from, 'yyyy-MM-dd')}&to=${format(to, 'yyyy-MM-dd')}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  // apply model spec and filter out invalid records (based on `log_date` validity)
-  return compose(filter(prop('log_date')), map(daylogModelSpec))(data.daylogs);
+    // apply model spec and filter out invalid records (based on `log_date` validity)
+    return compose(filter(prop('log_date')), map(daylogModelSpec))(data.daylogs);
+  } catch (e) {
+    e.message = `[fetchDaylogs] ${e.message}`;
+    ErrorService.onError(e);
+
+    return [];
+  }
 }
 
 const daylogModelSpec = applySpec({
