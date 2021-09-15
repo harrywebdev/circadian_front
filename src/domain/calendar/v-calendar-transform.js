@@ -4,16 +4,26 @@ export default function transformDaylogsForVCalendar(daylogs) {
   // group daylogs by the completeness (presented by dots)
   const items = groupDaylogsByCompleteness(daylogs);
 
+  // set highlights and dots
   return Object.keys(items).reduce((attributes, completeType) => {
-    // skip this one - it shouldn't have a dot for now
-    if (completeType === 'complete') {
+    // highlight attributes
+    if (completeType.match(/complete/)) {
+      attributes = [
+        ...attributes,
+        {
+          dates: items[completeType].map(prop('log_date')),
+          highlight:
+            completeType == 'complete' ? { color: 'green', fillMode: 'outline' } : { color: 'gray', fillMode: 'light' },
+        },
+      ];
+
       return attributes;
     }
 
+    // dot attributes
     attributes = [
       ...attributes,
       {
-        // key: daylog.id,
         dates: items[completeType].map(prop('log_date')),
         dot: getDotColorByCompleteType(completeType),
       },
@@ -37,6 +47,8 @@ function groupDaylogsByCompleteness(daylogs) {
       }
       if (isComplete(cur)) {
         acc.complete = [...acc.complete, cur];
+      } else {
+        acc.incomplete = [...acc.incomplete, cur];
       }
 
       return acc;
@@ -46,6 +58,7 @@ function groupDaylogsByCompleteness(daylogs) {
       meals: [],
       vices: [],
       complete: [],
+      incomplete: [],
     }
   );
 }
