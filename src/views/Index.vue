@@ -7,7 +7,6 @@
 <script>
 import { Calendar } from 'v-calendar';
 import { mapState } from 'vuex';
-import { fetchDaylogs } from '@/api/daylogs';
 import { ACTION_FETCH_DAYLOGS, ACTION_SELECT_CALENDAR_DATES } from '@/store/action-types';
 import transformDaylogsForVCalendar from '@/domain/calendar/v-calendar-transform';
 
@@ -25,9 +24,7 @@ export default {
   },
 
   async mounted() {
-    const daylogs = await fetchDaylogs(this.currentFrom, this.currentTo);
-
-    this.$store.dispatch(ACTION_FETCH_DAYLOGS, daylogs);
+    this.$store.dispatch(ACTION_FETCH_DAYLOGS, { from: this.currentFrom, to: this.currentTo });
   },
 
   methods: {
