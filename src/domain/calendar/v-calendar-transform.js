@@ -13,7 +13,7 @@ export default function transformDaylogsForVCalendar(daylogs) {
         {
           dates: items[completeType].map(prop('log_date')),
           highlight:
-            completeType == 'complete' ? { color: 'green', fillMode: 'outline' } : { color: 'gray', fillMode: 'light' },
+            completeType == 'complete' ? { color: 'indigo', fillMode: 'light' } : { color: 'gray', fillMode: 'light' },
         },
       ];
 
