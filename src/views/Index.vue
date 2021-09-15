@@ -28,8 +28,17 @@ export default {
   },
 
   methods: {
-    onPageUpdate(currentDate) {
-      this.$store.dispatch(ACTION_SELECT_CALENDAR_DATES, currentDate.date);
+    async onPageUpdate(currentDate) {
+      // v-calendar triggers this with current date right after first load - we can skip that
+      if (currentDate.date) {
+        return;
+      }
+
+      // select new dates (Month-1 because v-calendar supplies natural number with January = 1)
+      await this.$store.dispatch(ACTION_SELECT_CALENDAR_DATES, new Date(currentDate.year, currentDate.month - 1));
+
+      // fetch new daylogs
+      this.$store.dispatch(ACTION_FETCH_DAYLOGS, { from: this.currentFrom, to: this.currentTo });
     },
   },
 };
