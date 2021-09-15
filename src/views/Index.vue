@@ -6,9 +6,10 @@
 
 <script>
 import { Calendar } from 'v-calendar';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { fetchDaylogs } from '@/api/daylogs';
 import { ACTION_FETCH_DAYLOGS } from '@/store/action-types';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import transformDaylogsForVCalendar from '@/domain/calendar/v-calendar-transform';
 
 export default {
   components: {
@@ -17,13 +18,7 @@ export default {
 
   computed: {
     calendarData() {
-      return this.$store.state.daylogs.map(daylog => {
-        return {
-          key: daylog.id,
-          dates: daylog.log_date,
-          dot: true,
-        };
-      });
+      return transformDaylogsForVCalendar(this.$store.state.daylogs);
     },
   },
 
