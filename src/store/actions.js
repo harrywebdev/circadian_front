@@ -1,4 +1,10 @@
-import { ACTION_INIT_STORE, ACTION_FETCH_DAYLOGS, ACTION_SELECT_CALENDAR_DATES } from '@/store/action-types';
+import {
+  ACTION_INIT_STORE,
+  ACTION_FETCH_DAYLOGS,
+  ACTION_SELECT_CALENDAR_DATES,
+  ACTION_CREATE_DAYLOG,
+} from '@/store/action-types';
+
 import {
   MUTATION_ADD_DAYLOGS,
   MUTATION_UPDATE_CALENDAR_DATES,
@@ -6,7 +12,7 @@ import {
 } from '@/store/mutation-types';
 
 import { startOfMonth, endOfMonth } from 'date-fns';
-import { fetchDaylogs } from '@/api/daylogs';
+import { fetchDaylogs, storeDaylog } from '@/api/daylogs';
 import transformRangeForDaylogsCaching from '@/domain/transform-range-for-daylogs-caching';
 
 export default {
@@ -29,5 +35,11 @@ export default {
 
   [ACTION_SELECT_CALENDAR_DATES]({ commit }, date) {
     commit(MUTATION_UPDATE_CALENDAR_DATES, { from: startOfMonth(date), to: endOfMonth(date) });
+  },
+
+  async [ACTION_CREATE_DAYLOG]({ commit }, model) {
+    const daylog = await storeDaylog(model);
+
+    commit(MUTATION_ADD_DAYLOGS, [daylog]);
   },
 };

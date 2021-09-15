@@ -1,11 +1,12 @@
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { applySpec, compose, prop, filter, map } from 'ramda';
 import { specDateField, specBoolField } from '@/api/model-specs';
 import ErrorService from '@/domain/error-service';
+import isValid from 'date-fns/isValid';
+
+const baseUrl = `${process.env.VUE_APP_API_URL}/daylogs`;
 
 export async function fetchDaylogs(from, to) {
-  const baseUrl = `${process.env.VUE_APP_API_URL}/daylogs`;
-
   try {
     const response = await fetch(`${baseUrl}?from=${format(from, 'yyyy-MM-dd')}&to=${format(to, 'yyyy-MM-dd')}`, {
       headers: {
@@ -25,6 +26,38 @@ export async function fetchDaylogs(from, to) {
   }
 }
 
+export async function storeDaylog(daylogData) {
+  try {
+    const normalized = normalizeData(daylogData);
+
+    const response = await fetch(baseUrl, {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      method: 'post',
+      body: JSON.stringify(normalized),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.message) {
+        throw Error(data.message);
+      }
+
+      throw Error(`${response.status} ${response.statusText}`);
+    }
+
+    return daylogModelSpec(data.daylog);
+  } catch (e) {
+    e.message = `[storeDaylog] ${e.message}`;
+    ErrorService.onError(e);
+
+    throw e;
+  }
+}
+
 const daylogModelSpec = applySpec({
   id: compose(Number, prop('id')),
   is_complete: compose(Boolean, prop('is_complete')),
@@ -37,3 +70,40 @@ const daylogModelSpec = applySpec({
   last_meal_at: specDateField('last_meal_at'),
   sleep_at: specDateField('sleep_at'),
 });
+
+function normalizeData(data) {
+  const normalized = {
+    log_date: format(parseISO(data.log_date), 'yyyy-MM-dd'),
+    has_alcohol: normalizeChoice(data.has_alcohol),
+    has_alcohol_in_evening: normalizeChoice(data.has_alcohol_in_evening),
+    has_smoked: normalizeChoice(data.has_smoked),
+    wake_at: normalizeTime(data.wake_at),
+    first_meal_at: normalizeTime(data.first_meal_at),
+    last_meal_at: normalizeTime(data.last_meal_at),
+    sleep_at: normalizeTime(data.sleep_at),
+  };
+
+  return normalized;
+}
+
+function normalizeChoice(value) {
+  if (value === 'yes') {
+    return true;
+  }
+
+  if (value === 'no') {
+    return false;
+  }
+
+  return null;
+}
+
+function normalizeTime(value) {
+  const dateTime = typeof value == 'string' ? parseISO(value) : value;
+
+  if (isValid(dateTime)) {
+    return format(dateTime, 'HH:mm');
+  }
+
+  return null;
+}
